@@ -1,0 +1,1736 @@
+/* =============================================================================
+   Arctic Glow — modern userChrome.css
+   Ported from the legacy complete theme (Firefox 3–12 / chrome4)
+
+   Enable: about:config → toolkit.legacyUserProfileCustomizations.stylesheets = true
+   Restart Firefox after changes.
+
+   Do NOT set a default XUL @namespace. Current Firefox chrome is mixed
+   HTML + XUL; a XUL namespace makes most Proton selectors fail, so the
+   dark built-in UI and SVG icons show *alongside* the theme sprites.
+   ============================================================================= */
+
+/* ---- Arctic Glow palette ---- */
+:root {
+  --ag-ice: #e2eff3;
+  --ag-ice-light: #eaf8fb;
+  --ag-teal: #59a5c0;
+  --ag-teal-dark: #1e7a99;
+  --ag-text: #6FB2D9;
+  --ag-text-muted: #535d61;
+  --ag-text-disabled: #6f8188;
+  --ag-sand: #cfc999;
+  --ag-white: #ffffff;
+
+  /* Display size for 34×136 toolbar sprite sheets */
+  --ag-icon: 28px;
+  --ag-icon-sheet: 112px; /* 28 × 4 states */
+  /* Original theme: #navigator-toolbox alone paints toolbox-bg.png (a 32×160
+     vertical teal→ice gradient, repeat-x) and every row inside it
+     (#TabsToolbar, #nav-bar, #PersonalToolbar…) is transparent, so one
+     continuous gradient runs behind titlebar+tabs+urlbar. bg-main.png is
+     actually the *dialog/page* background in the original (near-flat ice),
+     which is why re-using it here looked flat/wrong. */
+  --ag-chrome-bg: var(--ag-ice) url("./images/toolbox-bg.png") repeat-x left top;
+
+  --toolbar-bgcolor: var(--ag-ice) !important;
+  --toolbar-bgimage: url("./images/bg-main.png") !important;
+  --toolbar-color: var(--ag-text) !important;
+  --toolbarbutton-icon-fill: var(--ag-text) !important;
+  --toolbarbutton-hover-background: transparent !important;
+  --toolbarbutton-active-background: transparent !important;
+  --toolbarbutton-inner-padding: 2px !important;
+  --toolbarbutton-outer-padding: 1px !important;
+  --lwt-accent-color: var(--ag-teal) !important;
+  --lwt-text-color: var(--ag-text) !important;
+  --lwt-tab-text: var(--ag-text) !important;
+  --lwt-toolbar-field-background-color: transparent !important;
+  --lwt-toolbar-field-focus-background-color: transparent !important;
+  --lwt-toolbar-field-color: var(--ag-text) !important;
+  --lwt-toolbar-field-border-color: var(--ag-teal-dark) !important;
+  --tab-min-height: 30px !important;
+  --tabs-navbar-shadow-size: 0 !important;
+  --tab-selected-bgcolor: transparent !important;
+  --tabpanel-background-color: var(--ag-white) !important;
+  --urlbar-box-bgcolor: transparent !important;
+  --urlbar-box-text-color: var(--ag-text) !important;
+  --urlbar-box-border-color: var(--ag-teal-dark) !important;
+  --urlbar-icon-fill-opacity: 1 !important;
+  --urlbar-background-color: transparent !important;
+  --toolbar-field-background-color: transparent !important;
+  --toolbar-field-color: var(--ag-text) !important;
+  --toolbar-field-border-color: var(--ag-teal-dark) !important;
+  --toolbar-field-focus-background-color: transparent !important;
+  --toolbar-field-focus-color: var(--ag-text) !important;
+  --urlbarView-highlight-background: transparent !important;
+  --urlbarView-hover-background: transparent !important;
+  --urlbarView-result-background: transparent !important;
+
+  /* menubg2.png left glow is ~22px; keep labels/icons to the right of it */
+  --ag-menu-stripe: 22px;
+  --ag-menu-pad-start: 26px;
+  --ag-menu-pad-end: 16px;
+
+  --arrowpanel-background: var(--ag-ice) url("./images/menu/menubg2.png") repeat-y left top !important;
+  --arrowpanel-color: var(--ag-text) !important;
+  --arrowpanel-border-color: var(--ag-teal-dark) !important;
+  --arrowpanel-dimmed: transparent !important;
+  --arrowpanel-dimmed-further: transparent !important;
+  --arrowpanel-menuitem-margin: 0 !important;
+  --arrowpanel-menuitem-padding: 6px var(--ag-menu-pad-end) 6px var(--ag-menu-pad-start) !important;
+  --panel-subview-body-padding: 4px 0 !important;
+  --panel-padding: 4px 0 !important;
+  --menu-padding: 0 !important;
+  --panel-item-hover-bgcolor: transparent !important;
+  --panel-item-active-bgcolor: transparent !important;
+  --button-background-color: transparent !important;
+  --button-hover-background-color: transparent !important;
+  --button-active-background-color: transparent !important;
+}
+
+#main-window,
+#navigator-toolbox,
+#navigator-toolbox-background,
+#titlebar,
+#toolbar-menubar,
+#TabsToolbar,
+#nav-bar,
+#PersonalToolbar,
+#browser {
+  color-scheme: light !important;
+}
+
+/* ==========================================================================
+   Every OTHER chrome window (Library, Page Info, any dialog)
+   ========================================================================== */
+
+/* The rule above only reaches elements that live inside the main browser
+   window's own document. The Library window (bookmarks/history/downloads
+   manager), Page Info, and plain <dialog> windows are each their OWN
+   top-level XUL document with their own root — #main-window above never
+   matches inside them, so with no override they fall back to Firefox's
+   built-in dark chrome (this is what's happening in the Library/Downloads
+   screenshot: the sidebar, toolbar and list are all default dark, not
+   Arctic Glow at all). :root is per-document, so this reaches every
+   window's own root the same way the rule above reaches the main one. */
+:root {
+  color-scheme: light !important;
+}
+
+window,
+dialog {
+  background-color: var(--ag-ice) !important;
+  color: var(--ag-text) !important;
+}
+
+/* ==========================================================================
+   Navigator toolbox & toolbars
+   ========================================================================== */
+
+#navigator-toolbox,
+#navigator-toolbox-background,
+#titlebar,
+.browser-titlebar,
+.browser-toolbar,
+#nav-bar,
+#TabsToolbar,
+#PersonalToolbar,
+#toolbar-menubar,
+#TabsToolbar-customization-target,
+#nav-bar-customization-target,
+#tabbrowser-arrowscrollbox-periphery,
+.toolbar-items,
+.items-wrapper {
+  color: var(--ag-text) !important;
+  border: none !important;
+  box-shadow: none !important;
+  scrollbar-color: var(--ag-teal) var(--ag-ice) !important;
+}
+
+/* Only the toolbox itself paints the gradient texture. Every row inside it
+   stays transparent so the same continuous image shows through behind the
+   titlebar, tab strip, and nav-bar instead of each row re-starting its own
+   copy at its own top edge (which read as a jarring, wrong-colored banding). */
+#navigator-toolbox,
+#navigator-toolbox-background {
+  background: var(--ag-chrome-bg) !important;
+}
+
+#titlebar,
+.browser-titlebar,
+.browser-toolbar,
+#nav-bar,
+#TabsToolbar,
+#PersonalToolbar,
+#toolbar-menubar,
+#TabsToolbar-customization-target,
+#nav-bar-customization-target,
+#tabbrowser-arrowscrollbox-periphery,
+.toolbar-items,
+.items-wrapper {
+  background: transparent !important;
+}
+
+#navigator-toolbox,
+#navigator-toolbox-background {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#nav-bar {
+  border-top: 1px solid var(--ag-teal-dark) !important;
+  min-height: 36px !important;
+  padding-block: 2px !important;
+}
+
+#toolbar-menubar {
+  color: var(--ag-text) !important;
+}
+
+#toolbar-menubar menu {
+  color: var(--ag-text) !important;
+
+}
+
+toolbar:not(#TabsToolbar):not(#nav-bar):not(#toolbar-menubar) {
+  background: var(--ag-chrome-bg) !important;
+  border-top: 1px solid var(--ag-teal-dark) !important;
+  min-height: 28px !important;
+}
+
+#PersonalToolbar {
+  min-height: 26px !important;
+}
+
+/* ==========================================================================
+   Notification bars (permission prompts, "site prevented from...", etc.)
+   ========================================================================== */
+
+/* Original theme paints these flat --ag-ice, no texture — currently
+   unstyled here, so they were falling back to Firefox's default white/gray
+   and clashing with everything else. */
+notification-message,
+notification,
+.notificationbox-stack,
+#notification-popup-box {
+  background-color: var(--ag-ice) !important;
+  color: var(--ag-text) !important;
+}
+
+notification-message[type="critical"],
+notification[type="critical"] {
+  color: #c0392b !important;
+}
+
+notification-message .button,
+notification .button {
+  color: var(--ag-text) !important;
+  background: transparent !important;
+  border: 1px solid var(--ag-teal-dark) !important;
+}
+
+toolbarseparator {
+  border-inline-start: 1px solid color-mix(in srgb, var(--ag-teal-dark) 50%, transparent) !important;
+}
+
+toolbarbutton.bookmark-item {
+  color: var(--ag-text) !important;
+  border-radius: 3px !important;
+}
+
+toolbarbutton.bookmark-item:hover:active,
+toolbarbutton.bookmark-item[open="true"] {
+  background-color: var(--ag-ice) !important;
+}
+
+/* ==========================================================================
+   Tabs
+   ========================================================================== */
+
+#TabsToolbar {
+  padding-top: 3px !important;
+  min-height: 32px !important;
+  /* This is the titlebar row (tabs-in-titlebar). In the original theme it
+     has no background of its own — it's transparent over #navigator-toolbox's
+     single toolbox-bg.png, same as every other row. bg-gen.png (used here
+     previously) is actually the generic <dialog> background upstream, not
+     a titlebar asset, which is why this row looked like a different color
+     from the rest of the chrome. */
+  background: transparent !important;
+}
+
+#tabbrowser-tabs,
+#tabbrowser-arrowscrollbox,
+#tabbrowser-arrowscrollbox-periphery {
+  background: transparent !important;
+  border-bottom: none !important;
+}
+
+/* Sand strip under the tab row — empty content, not a second title */
+#TabsToolbar::after {
+  content: "" !important;
+  display: block !important;
+  height: 4px !important;
+  pointer-events: none !important;
+  background: var(--ag-sand) url("./images/tabbrowser/tabstrip-bottom.png") repeat-x !important;
+  border-top: 1px solid var(--ag-teal-dark);
+  border-bottom: 1px solid var(--ag-ice);
+}
+
+.tabbrowser-tab {
+  color: var(--ag-text) !important;
+  margin-block: 2px 0 !important;
+  padding-inline: 1px !important;
+}
+
+.tabbrowser-tab .tab-background {
+  border: 1px solid color-mix(in srgb, var(--ag-teal-dark) 70%, transparent) !important;
+  border-bottom: none !important;
+  border-radius: 4px 4px 0 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  margin-block: 0 !important;
+  background-color: transparent !important;
+}
+
+/* Hide Proton extras that read as a second tab / floating title plate */
+.tab-background > .tab-context-line,
+.tab-background > .tab-loading-burst,
+.tabbrowser-tab .tab-background::before,
+.tabbrowser-tab .tab-background::after {
+  display: none !important;
+}
+
+.tabbrowser-tab:not([selected="true"]) .tab-background {
+  background: var(--ag-ice) url("./images/tabbrowser/tab-bkgnd.png") repeat-x left top !important;
+  background-size: auto 100% !important;
+}
+
+.tabbrowser-tab:not([selected="true"]):hover .tab-background {
+  background-image: url("./images/tabbrowser/tab-hover-bkgnd.png") !important;
+  background-size: auto 100% !important;
+  border-color: var(--ag-teal-dark) !important;
+}
+
+.tabbrowser-tab[selected="true"] .tab-background,
+.tabbrowser-tab[visuallyselected="true"] .tab-background {
+  background: var(--ag-ice) url("./images/tabbrowser/tab-active-bkgnd.png") repeat-x left top !important;
+  background-size: auto 100% !important;
+  border-color: var(--ag-teal-dark) !important;
+}
+
+.tabbrowser-tab .tab-label,
+.tabbrowser-tab .tab-text {
+  color: var(--ag-text) !important;
+}
+
+.tabbrowser-tab[selected="true"] .tab-text,
+.tabbrowser-tab[selected="true"] .tab-label {
+  font-weight: bold !important;
+}
+
+.tab-icon-image,
+.tab-throbber {
+  width: 16px !important;
+  height: 16px !important;
+  margin-inline-end: 4px !important;
+}
+
+/* Close: 4×16px horizontal sprite (gray default, red selected/hover) */
+.tab-close-button {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  list-style-image: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  padding: 0 !important;
+  margin-inline-end: 6px !important;
+  background: url("./images/icons/close.png") no-repeat 0 0 !important;
+  background-size: 64px 16px !important;
+  background-position: -48px 0 !important;
+  fill: transparent !important;
+  color: transparent !important;
+}
+
+.tabbrowser-tab[selected="true"] .tab-close-button {
+  background-position: 0 0 !important;
+}
+
+.tab-close-button:hover {
+  background-position: -16px 0 !important;
+}
+
+.tab-close-button:hover:active {
+  background-position: -32px 0 !important;
+}
+
+.tab-close-button > .toolbarbutton-icon,
+.tab-close-button .toolbarbutton-icon {
+  display: none !important;
+}
+
+/* New tab: 3×16px plus sprite */
+#tabs-newtab-button,
+#new-tab-button,
+.tabs-newtab-button {
+  appearance: none !important;
+  list-style-image: none !important;
+  background: var(--ag-ice) url("./images/tabbrowser/tab-bkgnd.png") repeat-x !important;
+  background-size: auto 100% !important;
+  border: 1px solid var(--ag-teal-dark) !important;
+  border-bottom: none !important;
+  border-radius: 4px 4px 0 0 !important;
+  min-width: 28px !important;
+  min-height: 26px !important;
+}
+
+#tabs-newtab-button > .toolbarbutton-icon,
+#new-tab-button > .toolbarbutton-icon,
+.tabs-newtab-button > .toolbarbutton-icon {
+  list-style-image: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  padding: 8px !important;
+  background: url("./images/tabbrowser/newtab.png") no-repeat 0 0 padding-box !important;
+  background-size: 48px 16px !important;
+}
+
+#tabs-newtab-button:hover > .toolbarbutton-icon,
+#new-tab-button:hover > .toolbarbutton-icon,
+.tabs-newtab-button:hover > .toolbarbutton-icon {
+  background-position: -16px 0 !important;
+}
+
+#tabs-newtab-button:active > .toolbarbutton-icon,
+#new-tab-button:active > .toolbarbutton-icon,
+.tabs-newtab-button:active > .toolbarbutton-icon {
+  background-position: -32px 0 !important;
+}
+
+.tabbrowser-arrowscrollbox > toolbarbutton {
+  background: var(--ag-ice) url("./images/tabbrowser/tab-bkgnd.png") repeat-x !important;
+  border: 1px solid var(--ag-teal-dark) !important;
+  border-bottom: none !important;
+  border-radius: 4px 4px 0 0 !important;
+}
+
+#tab-preview-panel {
+  --panel-background: var(--ag-ice-light) !important;
+  --panel-color: var(--ag-text) !important;
+  --panel-border-color: var(--ag-teal-dark) !important;
+}
+
+/* ==========================================================================
+   URL bar & search bar
+   ========================================================================== */
+
+#urlbar-container {
+  --urlbar-container-height: 32px !important;
+  background: transparent !important;
+}
+
+/* Proton always sets [breakout] on the urlbar. Do not treat that as “open”. */
+#urlbar,
+#urlbar[focused],
+#urlbar[focused="true"],
+#urlbar[open],
+#urlbar[breakout],
+#urlbar[breakout-extend],
+#searchbar {
+  --urlbar-background-color: transparent !important;
+  --toolbar-field-background-color: transparent !important;
+  --toolbar-field-focus-background-color: transparent !important;
+  --lwt-toolbar-field-background-color: transparent !important;
+  --lwt-toolbar-field-focus-background-color: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* chrome4 (the branch your theme actually resolves to on Firefox 4+ /
+   Pale Moon — see chrome.manifest) does NOT paint the urlbar as one big
+   gradient sprite. #urlbar-container/#urlbar are mostly transparent, with
+   two small corner accents (text-bg-l.png / text-bg-r.png) sitting in the
+   surrounding toolbar background, and the actual field is a plain white
+   rounded box drawn on top:
+
+     .urlbar-input-box > .urlbar-input { border-radius: 3px;
+       background-color: white; color: black; }
+
+   That's the look in the Pale Moon reference. Reproduce that instead of
+   the classic 4-slice pill. */
+
+#urlbar-background,
+#urlbar > #urlbar-background,
+.urlbar-background,
+#searchbar,
+#searchbar-background {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: transparent !important;
+  background-image:
+    url("./images/text-bg-l.png"),
+    url("./images/text-bg-r.png") !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-position: left center, right center !important;
+  background-size: auto auto, auto auto !important;
+  border: none !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#urlbar-input-container,
+#searchbar .searchbar-textbox {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: var(--ag-white) !important;
+  background-image: none !important;
+  border: 1px solid color-mix(in srgb, var(--ag-teal-dark) 45%, transparent) !important;
+  border-radius: 3px !important;
+  margin-block: 3px !important;
+  margin-inline: 3px !important;
+}
+
+/* Closed / focused field: same white pill, no sprite swap needed. */
+#urlbar:not([open]):not([breakout-extend]) > #urlbar-background,
+#urlbar[focused]:not([open]):not([breakout-extend]) > #urlbar-background,
+#urlbar[focused="true"]:not([open]):not([breakout-extend]) > #urlbar-background,
+#urlbar:focus-within:not([open]):not([breakout-extend]) > #urlbar-background {
+  background-color: transparent !important;
+  background-image:
+    url("./images/text-bg-l.png"),
+    url("./images/text-bg-r.png") !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-position: left center, right center !important;
+  background-size: auto auto, auto auto !important;
+}
+
+/* Results / breakout-extend: ice fill for the dropdown, white pill across the top row. */
+#urlbar[open] > #urlbar-background,
+#urlbar[breakout-extend] > #urlbar-background {
+  background-color: var(--ag-ice) !important;
+  background-image: url("./images/menu/menubg2.png") !important;
+  background-repeat: repeat-y !important;
+  background-position: left top !important;
+  background-size: auto auto !important;
+  /* menubg2.png already paints its own left-edge glow/stripe — a real
+     border-left on top of that is what produced the double line down the
+     left side. The original theme's own popup.css draws this same sprite
+     with border-left explicitly zeroed (border-top/right/bottom only);
+     match that instead of bordering all four sides. */
+  border-top: 1px solid var(--ag-teal-dark) !important;
+  border-right: 1px solid var(--ag-teal-dark) !important;
+  border-bottom: 1px solid var(--ag-teal-dark) !important;
+  border-left: none !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+#urlbar[open] #urlbar-input-container,
+#urlbar[breakout-extend] #urlbar-input-container,
+#urlbar[focused] #urlbar-input-container,
+#urlbar[focused="true"] #urlbar-input-container {
+  background-color: var(--ag-white) !important;
+  background-image: none !important;
+}
+
+#urlbar-input,
+#searchbar input,
+.urlbar-input-box,
+#urlbar-input-container,
+#urlbar-scheme {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  color: #000 !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+#urlbar-background::before,
+#urlbar-background::after {
+  display: none !important;
+}
+
+#urlbar-input::placeholder,
+#searchbar input::placeholder {
+  color: var(--ag-text-disabled) !important;
+  opacity: 1 !important;
+}
+
+#search-container {
+  background: transparent url("./images/text-bg-l.png") no-repeat left center !important;
+  padding-inline-start: 6px !important;
+}
+
+#identity-box,
+#identity-icon-box,
+#tracking-protection-icon-container,
+#identity-permission-box {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  color: var(--ag-text) !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 3px !important;
+}
+
+/* The "granted permissions" plug icon has no themed sprite of its own —
+   let it use Firefox's built-in SVG, but force appearance/size/fill so it
+   doesn't inherit native OS button chrome or an unconstrained icon size. */
+#permissions-granted-icon {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  -moz-context-properties: fill, fill-opacity !important;
+  fill: var(--ag-text) !important;
+  fill-opacity: 1 !important;
+  opacity: 1 !important;
+  background: none !important;
+}
+
+/* NOTE: this used to paint #identity-box (the whole icon cluster, including
+   #identity-permission-box) with a blue gradient on any HTTPS site. That's
+   what was showing through as a highlighted pill behind the permission
+   icon — the sprite-position rules below only need the selector, not a
+   background, so the gradient/color are dropped. */
+#identity-box[pageproxystate="valid"].verifiedDomain,
+#identity-box[pageproxystate="valid"].verifiedIdentity,
+#identity-icon-box[pageproxystate="valid"] {
+  background: transparent !important;
+  color: var(--ag-text) !important;
+}
+
+/* Identity: 3-state vertical sprite, 16px tiles — never show the whole sheet */
+#identity-icon {
+  width: 0 !important;
+  height: 0 !important;
+  padding: 8px !important;
+  list-style-image: none !important;
+  fill: transparent !important;
+  background: url("./images/identity.png") no-repeat 0 0 padding-box !important;
+  background-size: 16px 48px !important;
+}
+
+#identity-box[pageproxystate="valid"].verifiedDomain #identity-icon {
+  background-position: 0 -16px !important;
+}
+
+#identity-box[pageproxystate="valid"].verifiedIdentity #identity-icon {
+  background-position: 0 -32px !important;
+}
+
+#identity-icon-box {
+  background: url("./images/urlbar-favicon-glow.png") center center no-repeat !important;
+  background-size: 24px 18px !important;
+}
+
+#star-button-box,
+#star-button {
+  list-style-image: none !important;
+}
+
+#star-button {
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  padding: 8px !important;
+  background: url("./images/places/bookmark.png") no-repeat 0 0 padding-box !important;
+  background-size: 48px 16px !important;
+}
+
+#star-button:hover {
+  background-position: -16px 0 !important;
+}
+
+#star-button[starred],
+#star-button[starred="true"] {
+  background-image: url("./images/places/editBookmark.png") !important;
+  background-position: 0 0 !important;
+}
+
+/* ==========================================================================
+   URL bar page actions (Picture-in-Picture, "Add tab to taskbar", etc.)
+   ========================================================================== */
+
+/* No pixel-art assets exist for these in the original theme — they're
+   modern Firefox features (~2023+) that didn't exist in the Firefox 3–12
+   era this theme was built for. Rather than leave them as unstyled black
+   SVGs, recolor them via -moz-context-properties to match the palette,
+   the same technique used for the permission icon above. */
+#page-action-buttons > toolbarbutton,
+#page-action-buttons .urlbar-icon,
+.urlbar-page-action,
+.urlbar-page-action > .urlbar-icon,
+#picture-in-picture-button,
+#picture-in-picture-button > .urlbar-icon {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  -moz-context-properties: fill, fill-opacity !important;
+  fill: var(--ag-teal-dark) !important;
+  fill-opacity: 1 !important;
+  color: var(--ag-teal-dark) !important;
+}
+
+#page-action-buttons > toolbarbutton:hover,
+.urlbar-page-action:hover,
+#picture-in-picture-button:hover {
+  background: transparent !important;
+  fill: var(--ag-text) !important;
+}
+
+/* Combined go / reload / stop in the urlbar: 16×16 cells, 2 rows × 3 cols */
+#urlbar-go-button,
+#urlbar-reload-button,
+#urlbar-stop-button {
+  list-style-image: none !important;
+}
+
+#urlbar-go-button > .toolbarbutton-icon,
+#urlbar-reload-button > .toolbarbutton-icon,
+#urlbar-stop-button > .toolbarbutton-icon {
+  width: 0 !important;
+  height: 0 !important;
+  padding: 8px !important;
+  list-style-image: none !important;
+  fill: transparent !important;
+  background: url("./images/reload-stop-go.png") no-repeat padding-box !important;
+  background-size: 48px 32px !important;
+}
+
+#urlbar-reload-button > .toolbarbutton-icon { background-position: 0 0 !important; }
+#urlbar-reload-button:hover > .toolbarbutton-icon { background-position: 0 -16px !important; }
+#urlbar-stop-button > .toolbarbutton-icon { background-position: -16px 0 !important; }
+#urlbar-stop-button:hover > .toolbarbutton-icon { background-position: -16px -16px !important; }
+#urlbar-go-button > .toolbarbutton-icon { background-position: -32px 0 !important; }
+#urlbar-go-button:hover > .toolbarbutton-icon { background-position: -32px -16px !important; }
+
+#urlbar-search-button,
+.searchbar-search-button {
+  list-style-image: none !important;
+}
+
+.searchbar-search-button .searchbar-search-icon,
+#urlbar-search-button .toolbarbutton-icon {
+  width: 0 !important;
+  height: 0 !important;
+  padding: 8px !important;
+  background: url("./images/Go-arrow.png") no-repeat 0 0 padding-box !important;
+  background-size: 16px 48px !important;
+}
+
+.urlbarView,
+.urlbarView-body-outer,
+.urlbarView-body-inner,
+.urlbarView-results,
+#urlbar-results,
+.urlbarView .search-one-offs,
+#urlbar-search-mode-toolbar {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: var(--ag-ice) !important;
+  background-image: url("./images/menu/menubg2.png") !important;
+  background-repeat: repeat-y !important;
+  background-position: left top !important;
+  color: var(--ag-text) !important;
+  scrollbar-color: var(--ag-teal) var(--ag-ice) !important;
+}
+
+.urlbarView-row,
+.urlbarView-row-inner,
+.urlbarView-row .urlbarView-no-wrap,
+.urlbarView-row .urlbarView-title-separator,
+.urlbarView-row-body,
+.urlbarView-row-body-top,
+.urlbarView-row-body-bottom {
+  color: var(--ag-text) !important;
+  background: transparent none !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* "Firefox Suggest" / "Search Engines" group headers above sections of
+   results — a separate element from the rows, not reached by the rules
+   above, so it was falling back to Firefox's default panel look (this is
+   most of what reads as "unstyled dark" in a screenshot: a themed row list
+   with an unthemed header bar sitting above it looks like the whole panel
+   never got styled). Class name has changed across versions, so this
+   catches it by attribute-prefix rather than one exact name. */
+.urlbarView [class*="urlbarView-group"],
+.urlbarView-row-body-bottom {
+  color: var(--ag-text-muted) !important;
+  background: transparent !important;
+}
+
+.urlbarView-title {
+  color: var(--ag-text) !important;
+}
+
+.urlbarView-url {
+  color: var(--ag-teal-dark) !important;
+}
+
+.urlbarView-row {
+  margin-block: 0 !important;
+  margin-inline: 0 !important;
+  padding-block: 2px !important;
+}
+
+.urlbarView-row[selected],
+.urlbarView-row[selected="true"],
+.urlbarView-row:hover,
+.urlbarView-row[usermoving] {
+  color: var(--ag-text) !important;
+  background-color: transparent !important;
+  background-image: url("./images/url-hover.png") !important;
+  background-repeat: repeat !important;
+  background-position: left center !important;
+}
+
+.urlbarView-url {
+  color: var(--ag-teal-dark) !important;
+}
+
+/* Search-mode / labelled chrome buttons (empty slot left of the urlbar) */
+.main-button,
+.button-background,
+.button-background.labelled,
+#urlbar-searchmode-switcher,
+#urlbar-searchmode-switcher > .button-background,
+#searchmode-switcher-chicklet,
+#nav-bar-overflow-button {
+  background-color: transparent !important;
+  background-image: none !important;
+  color: var(--ag-text) !important;
+  fill: var(--ag-teal-dark) !important;
+}
+
+.main-button .button-icon,
+.main-button img,
+.button-background.labelled img,
+.button-background .button-icon,
+#urlbar-searchmode-switcher .toolbarbutton-icon,
+#urlbar-searchmode-switcher img,
+#nav-bar-overflow-button .toolbarbutton-icon {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill: var(--ag-teal-dark) !important;
+  fill-opacity: 1 !important;
+  width: 16px !important;
+  height: 16px !important;
+  padding: 0 !important;
+  background: none !important;
+  list-style-image: unset !important;
+}
+
+#urlbar-searchmode-switcher {
+  list-style-image: url("./images/Go-arrow.png") !important;
+}
+
+#urlbar-searchmode-switcher .toolbarbutton-icon,
+#urlbar-searchmode-switcher-dropmarker {
+  width: 0 !important;
+  height: 0 !important;
+  padding: 8px !important;
+  background: url("./images/Go-arrow.png") no-repeat 0 0 padding-box !important;
+  background-size: 16px 48px !important;
+  list-style-image: none !important;
+}
+
+/* ==========================================================================
+   Toolbar buttons — hide Proton SVG / animatable copies, paint 4-state sheets
+   ========================================================================== */
+
+/* Sprite-replaced built-in buttons only — never webextensions / tab-strip widgets */
+#back-button,
+#forward-button,
+#reload-button,
+#stop-button,
+#home-button,
+#downloads-button,
+#history-button,
+#library-button,
+#bookmarks-button,
+#bookmarks-menu-button,
+#print-button,
+#cut-button,
+#copy-button,
+#paste-button,
+#new-window-button,
+#fullscreen-button,
+#sync-button,
+#fxa-toolbar-menu-button,
+#feed-button,
+#unified-extensions-button,
+#addons-button,
+#sidebar-button,
+#multipanel-button,
+#zoom-in-button,
+#zoom-out-button,
+#firefox-view-button {
+  appearance: none !important;
+  list-style-image: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 1px !important;
+  margin: 0 !important;
+}
+
+/* Animated Proton overlays = the extra “ghost” back/reload/download icons */
+#nav-bar .toolbarbutton-animatable-box,
+#nav-bar .toolbarbutton-animatable-image,
+#stop-reload-button .toolbarbutton-animatable-box,
+#downloads-button .toolbarbutton-animatable-box {
+  display: none !important;
+}
+
+#back-button > .toolbarbutton-menu-dropmarker,
+#forward-button > .toolbarbutton-menu-dropmarker,
+#back-button .toolbarbutton-menu-dropmarker,
+#forward-button .toolbarbutton-menu-dropmarker {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+}
+
+#back-button > .toolbarbutton-badge-stack,
+#forward-button > .toolbarbutton-badge-stack,
+#reload-button > .toolbarbutton-badge-stack,
+#stop-button > .toolbarbutton-badge-stack,
+#home-button > .toolbarbutton-badge-stack,
+#PanelUI-menu-button > .toolbarbutton-badge-stack,
+#unified-extensions-button > .toolbarbutton-badge-stack,
+#fxa-toolbar-menu-button > .toolbarbutton-badge-stack,
+#downloads-button > .toolbarbutton-badge-stack {
+  background: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+#back-button .toolbarbutton-icon,
+#forward-button .toolbarbutton-icon,
+#reload-button .toolbarbutton-icon,
+#stop-button .toolbarbutton-icon,
+#home-button .toolbarbutton-icon,
+#downloads-button .toolbarbutton-icon,
+#history-button .toolbarbutton-icon,
+#library-button .toolbarbutton-icon,
+#bookmarks-button .toolbarbutton-icon,
+#bookmarks-menu-button .toolbarbutton-icon,
+#print-button .toolbarbutton-icon,
+#cut-button .toolbarbutton-icon,
+#copy-button .toolbarbutton-icon,
+#paste-button .toolbarbutton-icon,
+#new-window-button .toolbarbutton-icon,
+#fullscreen-button .toolbarbutton-icon,
+#sync-button .toolbarbutton-icon,
+#fxa-toolbar-menu-button .toolbarbutton-icon,
+#feed-button .toolbarbutton-icon,
+#unified-extensions-button .toolbarbutton-icon,
+#addons-button .toolbarbutton-icon,
+#sidebar-button .toolbarbutton-icon,
+#multipanel-button .toolbarbutton-icon,
+#firefox-view-button .toolbarbutton-icon,
+#zoom-in-button .toolbarbutton-icon,
+#zoom-out-button .toolbarbutton-icon {
+  appearance: none !important;
+  list-style-image: none !important;
+  fill: transparent !important;
+  fill-opacity: 0 !important;
+  stroke: transparent !important;
+  color: transparent !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: calc(var(--ag-icon) / 2) !important;
+  margin: 0 !important;
+  background-repeat: no-repeat !important;
+  background-origin: padding-box !important;
+  background-clip: padding-box !important;
+  background-size: var(--ag-icon) var(--ag-icon-sheet) !important;
+  background-position: 0 0 !important;
+}
+
+#back-button:not([disabled="true"]):hover .toolbarbutton-icon,
+#forward-button:not([disabled="true"]):hover .toolbarbutton-icon,
+#reload-button:not([disabled="true"]):hover .toolbarbutton-icon,
+#stop-button:not([disabled="true"]):hover .toolbarbutton-icon,
+#home-button:not([disabled="true"]):hover .toolbarbutton-icon,
+#downloads-button:not([disabled="true"]):hover .toolbarbutton-icon,
+#unified-extensions-button:hover .toolbarbutton-icon,
+#fxa-toolbar-menu-button:hover .toolbarbutton-icon,
+#sidebar-button:hover .toolbarbutton-icon {
+  background-position: 0 calc(var(--ag-icon) * -1) !important;
+}
+
+#back-button[disabled="true"] .toolbarbutton-icon,
+#forward-button[disabled="true"] .toolbarbutton-icon,
+#reload-button[disabled="true"] .toolbarbutton-icon,
+#stop-button[disabled="true"] .toolbarbutton-icon {
+  background-position: 0 calc(var(--ag-icon) * -2) !important;
+}
+
+#back-button:not([disabled="true"]):active .toolbarbutton-icon,
+#forward-button:not([disabled="true"]):active .toolbarbutton-icon,
+#reload-button:not([disabled="true"]):active .toolbarbutton-icon,
+#unified-extensions-button[open="true"] .toolbarbutton-icon {
+  background-position: 0 calc(var(--ag-icon) * -3) !important;
+}
+
+#back-button .toolbarbutton-icon { background-image: url("./images/icons/back.png") !important; }
+#forward-button .toolbarbutton-icon { background-image: url("./images/icons/next.png") !important; }
+#reload-button .toolbarbutton-icon { background-image: url("./images/icons/reload.png") !important; }
+#stop-button .toolbarbutton-icon { background-image: url("./images/icons/stop.png") !important; }
+#home-button .toolbarbutton-icon { background-image: url("./images/icons/home.png") !important; }
+#downloads-button .toolbarbutton-icon {
+  background-image: url("./images/icons/downloads.png") !important;
+}
+#history-button .toolbarbutton-icon,
+#library-button .toolbarbutton-icon,
+#firefox-view-button .toolbarbutton-icon {
+  background-image: url("./images/icons/history.png") !important;
+}
+#bookmarks-button .toolbarbutton-icon,
+#bookmarks-menu-button .toolbarbutton-icon {
+  background-image: url("./images/icons/bookmarks.png") !important;
+}
+#print-button .toolbarbutton-icon { background-image: url("./images/icons/print.png") !important; }
+#cut-button .toolbarbutton-icon { background-image: url("./images/icons/cut.png") !important; }
+#copy-button .toolbarbutton-icon { background-image: url("./images/icons/copy.png") !important; }
+#paste-button .toolbarbutton-icon { background-image: url("./images/icons/paste.png") !important; }
+#new-window-button .toolbarbutton-icon { background-image: url("./images/icons/new-window.png") !important; }
+#fullscreen-button .toolbarbutton-icon { background-image: url("./images/icons/fullscreen.png") !important; }
+#sync-button .toolbarbutton-icon,
+#fxa-toolbar-menu-button .toolbarbutton-icon {
+  background-image: url("./images/icons/sync.png") !important;
+}
+#feed-button .toolbarbutton-icon { background-image: url("./images/icons/feed.png") !important; }
+#unified-extensions-button .toolbarbutton-icon,
+#addons-button .toolbarbutton-icon {
+  background-image: url("./images/icons/addons.png") !important;
+}
+/* Was pointed at images/icons/insidebar.png, which only ever existed in the
+   old pre-Firefox-4 skin (chrome/browser/icons/) — the chrome4 branch this
+   theme actually resolves to on a modern build renamed this asset to
+   multipanel.png, so the sidebar button was loading a missing image. */
+#sidebar-button .toolbarbutton-icon,
+#multipanel-button .toolbarbutton-icon {
+  background-image: url("./images/icons/multipanel.png") !important;
+}
+
+/* #PanelUI-menu-button (hamburger / main menu button): the original theme
+   has no equivalent glyph to reuse here — Firefox 4–12 used a big orange
+   "Firefox" app button, not a 3-line hamburger, so there's no period-correct
+   sprite for this specific icon anywhere in the package (reusing addons.png
+   was a placeholder and is wrong). Recolor Firefox's own hamburger SVG to
+   the theme palette instead, the same technique already used above for
+   #permissions-granted-icon and the urlbar page-action icons. */
+#PanelUI-menu-button {
+  appearance: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#PanelUI-menu-button .toolbarbutton-icon,
+#firefox-view-button .toolbarbutton-icon,
+#zoom-in-button .toolbarbutton-icon,
+#zoom-out-button .toolbarbutton-icon {
+  appearance: none !important;
+  list-style-image: none !important;
+  fill: transparent !important;
+  fill-opacity: 0 !important;
+  stroke: transparent !important;
+  color: transparent !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: calc(var(--ag-icon) / 2) !important;
+  margin: 0 !important;
+  background-repeat: no-repeat !important;
+  background-origin: padding-box !important;
+  background-clip: padding-box !important;
+  background-size: var(--ag-icon) var(--ag-icon-sheet) !important;
+  background-position: 0 0 !important;
+}
+
+#PanelUI-menu-button .toolbarbutton-icon {
+  background-image: url("./images/icons/addons.png") !important;
+}
+
+#PanelUI-menu-button:hover .toolbarbutton-icon,
+#PanelUI-menu-button[open="true"] .toolbarbutton-icon {
+  fill: var(--ag-text) !important;
+}
+
+#PanelUI-menu-button > .toolbarbutton-badge-stack {
+  background: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Tab-strip periphery: all-tabs + scroll arrows (do not use 28px toolbar sheets) */
+#alltabs-button {
+  appearance: none !important;
+  list-style-image: none !important;
+  background: transparent !important;
+}
+
+#alltabs-button .toolbarbutton-icon {
+  list-style-image: none !important;
+  fill: transparent !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  padding: 8px 7px !important;
+  background: url("./images/tabbrowser/alltabs.png") no-repeat 0 0 padding-box !important;
+  background-size: 28px 16px !important;
+}
+
+#alltabs-button:hover .toolbarbutton-icon,
+#alltabs-button[open="true"] .toolbarbutton-icon {
+  background-position: -14px 0 !important;
+}
+
+#alltabs-button > .toolbarbutton-menu-dropmarker {
+  display: none !important;
+}
+
+#scrollbutton-up,
+#scrollbutton-down,
+.scrollbutton-up,
+.scrollbutton-down,
+#tabbrowser-arrowscrollbox-periphery > toolbarbutton {
+  appearance: none !important;
+  list-style-image: none !important;
+  background: transparent !important;
+}
+
+#scrollbutton-up .toolbarbutton-icon,
+.scrollbutton-up .toolbarbutton-icon {
+  list-style-image: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 8px 7px !important;
+  background: url("./images/tabbrowser/tab-arrow-left.png") no-repeat 0 0 padding-box !important;
+  background-size: 30px 17px !important;
+}
+
+#scrollbutton-down .toolbarbutton-icon,
+.scrollbutton-down .toolbarbutton-icon {
+  list-style-image: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 8px 7px !important;
+  background: url("./images/tabbrowser/tab-arrow-left.png") no-repeat 0 0 padding-box !important;
+  background-size: 30px 17px !important;
+  transform: scaleX(-1);
+}
+
+/* Window controls (minimize/maximize/close) — lives in #TabsToolbar's
+   titlebar-buttonbox since tabs-in-titlebar is enabled.
+
+   This is a direct port of chrome4/browser/browser.css's own
+   "fullscreen window controls" section, which is the actual code the
+   original theme used for this feature (fs-controls.png, by contrast,
+   was never referenced by any stylesheet in the original theme).
+   The original used -moz-image-region on windowControls.png (48x48,
+   16x16 cells); -moz-image-region no longer exists in modern Firefox,
+   so the regions below are translated to background-position on the
+   same file, same colors, same 3x3 layout, unmodified:
+
+   Sprite: images/icons/windowControls.png (48x48) = 3 cols x 3 rows, 16x16 each
+   Cols:  0=minimize  1=restore  2=close
+   Rows:  0=normal    1=hover    2=active/pressed */
+#titlebar-buttonbox-container,
+#titlebar-buttonbox {
+  background: transparent !important;
+}
+
+.titlebar-button {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  list-style-image: none !important;
+  background: url("./images/icons/windowControls.png") no-repeat 0 0 padding-box !important;
+  background-size: 48px 48px !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  padding: 0 !important;
+  margin: 0 3px !important;
+}
+
+.titlebar-button > .toolbarbutton-icon {
+  display: none !important;
+}
+
+/* #minimize-button { -moz-image-region: rect(0, 16px, 16px, 0); } */
+#titlebar-min              { background-position: 0px 0px !important; }
+#titlebar-min:hover        { background-position: 0px -16px !important; }
+#titlebar-min:hover:active { background-position: 0px -32px !important; }
+
+/* #restore-button { -moz-image-region: rect(0, 32px, 16px, 16px); }
+   windowControls.png only has a "restore" glyph (no separate maximize),
+   same as the original — used for both #titlebar-max and #titlebar-restore. */
+#titlebar-max,
+#titlebar-restore              { background-position: -16px 0px !important; }
+#titlebar-max:hover,
+#titlebar-restore:hover        { background-position: -16px -16px !important; }
+#titlebar-max:hover:active,
+#titlebar-restore:hover:active { background-position: -16px -32px !important; }
+
+/* #close-button { -moz-image-region: rect(0, 48px, 16px, 32px); } */
+#titlebar-close              { background-position: -32px 0px !important; }
+#titlebar-close:hover        { background-position: -32px -16px !important; }
+#titlebar-close:hover:active { background-position: -32px -32px !important; }
+
+#scrollbutton-up:not([disabled="true"]):hover .toolbarbutton-icon,
+#scrollbutton-down:not([disabled="true"]):hover .toolbarbutton-icon,
+.scrollbutton-up:not([disabled="true"]):hover .toolbarbutton-icon,
+.scrollbutton-down:not([disabled="true"]):hover .toolbarbutton-icon {
+  background-position: -15px 0 !important;
+}
+
+/* Restore every extension action (uBlock, etc.) after sprite rules */
+toolbarbutton.webextension-browser-action,
+toolbarbutton[id$="-BAP"],
+toolbarbutton[id$="-browser-action"],
+#ublock0_raymondhill_net-BAP {
+  list-style-image: var(--webextension-toolbar-image) !important;
+  background-image: none !important;
+}
+
+toolbarbutton.webextension-browser-action .toolbarbutton-icon,
+toolbarbutton[id$="-BAP"] .toolbarbutton-icon,
+toolbarbutton[id$="-browser-action"] .toolbarbutton-icon,
+#ublock0_raymondhill_net-BAP .toolbarbutton-icon {
+  list-style-image: var(--webextension-toolbar-image) !important;
+  fill: unset !important;
+  fill-opacity: 1 !important;
+  stroke: unset !important;
+  color: unset !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  padding: 0 !important;
+  background: none !important;
+  background-image: none !important;
+  transform: none !important;
+}
+
+#zoom-in-button .toolbarbutton-icon {
+  background-image: url("./images/icons/zoom-in.png") !important;
+  background-size: 22px 88px !important;
+  padding: 11px !important;
+}
+#zoom-out-button .toolbarbutton-icon {
+  background-image: url("./images/icons/zoom-out.png") !important;
+  background-size: 22px 88px !important;
+  padding: 11px !important;
+}
+
+/* Combined stop+reload widget: only one visible at a time */
+#stop-reload-button {
+  overflow: hidden !important;
+}
+
+toolbarbutton[disabled="true"] {
+  opacity: 1 !important; /* sprite already has a disabled frame */
+}
+
+/* ==========================================================================
+   Sidebar, status panel, find bar
+   ========================================================================== */
+
+#sidebar-box,
+#sidebar {
+  background-color: var(--ag-ice) !important;
+  color: var(--ag-text) !important;
+}
+
+#sidebar-header {
+  background: var(--ag-ice) url("./images/toolbar/toolbox-bg.png") repeat-x left top !important;
+  color: var(--ag-text) !important;
+  border-bottom: 1px solid var(--ag-teal-dark) !important;
+}
+
+.statuspanel-label {
+  background: var(--ag-ice) url("./images/tabbrowser/tab-active-bkgnd.png") repeat-x !important;
+  border: 1px solid var(--ag-teal-dark) !important;
+  border-bottom: none !important;
+  border-radius: 4px 4px 0 0 !important;
+  color: var(--ag-text) !important;
+  text-shadow: none !important;
+}
+
+findbar {
+  background: var(--ag-ice) !important;
+  color: var(--ag-text) !important;
+  border-top: 1px solid var(--ag-teal-dark) !important;
+}
+
+/* ==========================================================================
+   Menus & popups
+   ========================================================================== */
+
+menupopup,
+panel,
+#appMenu-popup,
+#appMenu-proton-popup,
+#unified-extensions-panel,
+#downloadsPanel,
+#identity-popup,
+#permission-popup,
+#protections-popup,
+#customizationui-widget-panel,
+#widget-overflow,
+#widget-overflow-mainView,
+#BMB_bookmarksPopup,
+#PlacesToolbarItems menupopup,
+#contentAreaContextMenu,
+#toolbar-context-menu,
+#tabContextMenu,
+#backForwardMenu,
+PanelMultiview,
+.panel-viewstack,
+.panel-subview,
+panelview,
+#appMenu-libraryView,
+#PanelUI-fxa,
+#fxa-menu,
+#allTabsMenu-allTabsView {
+  --panel-color: var(--ag-text) !important;
+  --arrowpanel-color: var(--ag-text) !important;
+  --panel-border-color: var(--ag-teal-dark) !important;
+  --panel-item-hover-bgcolor: transparent !important;
+  --panel-item-active-bgcolor: transparent !important;
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: var(--ag-ice) !important;
+  background-image: url("./images/menu/menubg2.png") !important;
+  background-repeat: repeat-y !important;
+  background-position: left top !important;
+  background-size: auto auto !important;
+  color: var(--ag-text) !important;
+  padding-inline-start: 0 !important;
+  /* --panel-border-color above makes Firefox's own panel.css draw a real
+     border on all four sides. menubg2.png already paints its own left-edge
+     glow, so the two stack into a visible double line on the left — this
+     is the "double borders on the left hand side" the theme used to avoid
+     by zeroing border-left (see chrome4/global/popup.css). Repeat that
+     here instead of a uniform border. */
+  border-top: 1px solid var(--ag-teal-dark) !important;
+  border-right: 1px solid var(--ag-teal-dark) !important;
+  border-bottom: 1px solid var(--ag-teal-dark) !important;
+  border-left: none !important;
+}
+
+.panel-header,
+.panel-subview-body,
+.panel-mainview,
+.panel-viewcontainer,
+.unified-extensions-item,
+#unified-extensions-view,
+#appMenu-protonMainView,
+#appMenu-popup .panel-subview-body {
+  background-color: transparent !important;
+  background-image: none !important;
+  color: var(--ag-text) !important;
+  scrollbar-color: var(--ag-teal) var(--ag-ice) !important;
+}
+
+/* Full-width rows on the panel texture. Pad content past menubg2’s left glow. */
+menu,
+menuitem,
+menucaption,
+.subviewbutton,
+.subview-subheader,
+.trustpanel-header,
+.panel-list-item,
+toolbarbutton.subviewbutton,
+.toolbarbutton-1.subviewbutton,
+.unified-extensions-item-menu-button,
+menupopup .bookmark-item,
+.panel-banner-item,
+.addon-banner-item,
+#appMenu-zoom-controls,
+#appMenu-fxa-status2,
+#appMenu-fxa-label2,
+#appMenu-fxa-text,
+.panel-header,
+.panel-header > h1,
+.panel-header > label {
+  color: var(--ag-text) !important;
+  background: transparent none !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  margin-inline: 0 !important;
+  /* Plain <menu>/<menuitem> (context menus, File/Edit/View, bookmarks menu)
+     don't consume --arrowpanel-menuitem-padding — give them the same
+     start/end clearance explicitly so labels never touch the panel edge. */
+  padding-inline: var(--ag-menu-pad-start) var(--ag-menu-pad-end) !important;
+  box-sizing: border-box !important;
+}
+
+menu > .menu-accel-container,
+menuitem > .menu-accel-container {
+  margin-inline-start: 12px !important;
+  padding-inline-end: 2px !important;
+}
+
+.subviewbutton > .toolbarbutton-icon,
+.subviewbutton > .toolbarbutton-text,
+.subviewbutton > .toolbarbutton-badge-stack,
+menuitem > .menu-iconic-left,
+menu > .menu-iconic-left,
+.menu-iconic-left,
+.menu-text,
+.menu-iconic-text {
+  margin-inline-start: 0 !important;
+}
+
+menu:hover,
+menuitem:hover,
+menu[_moz-menuactive="true"],
+menuitem[_moz-menuactive="true"],
+.subviewbutton:hover,
+.subviewbutton:is(:hover, :focus, [open], [checked], [selected]),
+.panel-list-item:hover,
+toolbarbutton.subviewbutton:hover,
+toolbarbutton.subviewbutton[open],
+.unified-extensions-item:hover {
+  background-color: transparent !important;
+  background-image: url("./images/menu/menubg2-hover.png") !important;
+  background-repeat: repeat-y !important;
+  background-position: left top !important;
+  background-size: auto auto !important;
+  color: var(--ag-text) !important;
+}
+
+menuseparator,
+toolbarseparator.panel-header-separator,
+.panel-subview-body toolbarseparator,
+#appMenu-popup toolbarseparator {
+  border: none !important;
+  border-bottom: 1px dotted var(--ag-teal-dark) !important;
+  background: transparent none !important;
+  margin-inline-start: var(--ag-menu-pad-start) !important;
+  margin-inline-end: 8px !important;
+}
+
+/* ==========================================================================
+   Extension toolbar buttons (pinned webextension icons, e.g. uBlock)
+   ========================================================================== */
+
+/* These never matched the named built-in-button list above, so they kept
+   native OS button chrome — that's the box that "pops up" on hover. */
+toolbarbutton.webextension-browser-action {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 3px !important;
+}
+
+toolbarbutton.webextension-browser-action:is(:hover, [open="true"]) {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* ==========================================================================
+   Flexible-space toolbar spacers
+   ========================================================================== */
+
+/* A "Flexible Space" item between toolbar buttons has no icon of its own —
+   it just shows the plain toolbar texture, which has its own built-in
+   gradient/glow, so an empty spacer reads as a stray highlighted box.
+   Cap it down; remove the spacer entirely via Customize Toolbar if you'd
+   rather the icons sit truly flush. */
+#nav-bar toolbarspring,
+#nav-bar toolbarspacer,
+#nav-bar [id^="customizableui-special-spring"] {
+  max-width: 8px !important;
+  min-width: 0 !important;
+}
+
+/* ==========================================================================
+   Downloads panel contents
+   ========================================================================== */
+
+/* #downloadsPanel itself is already covered by the shared menupopup/panel
+   rule above (texture + border), but the rows/icons/buttons inside it are
+   separate elements that rule doesn't reach — they were falling back to
+   stock Photon white rows and default icon colors. */
+#downloadsListBox,
+#downloadsListBox richlistitem,
+#downloadsListBox .download-state {
+  background: transparent !important;
+  color: var(--ag-text) !important;
+}
+
+#downloadsListBox richlistitem:hover,
+#downloadsListBox richlistitem[selected="true"] {
+  background-color: transparent !important;
+  background-image: url("./images/menu/menubg2-hover.png") !important;
+  background-repeat: repeat-y !important;
+  background-position: left top !important;
+}
+
+#downloadsListBox .downloadTarget,
+#downloadsListBox description.downloadDetails,
+#downloadsListBox .downloadDetails {
+  color: var(--ag-text-muted) !important;
+}
+
+#downloadsListBox .downloadButton,
+#downloadsListBox toolbarbutton {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  -moz-context-properties: fill, fill-opacity !important;
+  fill: var(--ag-teal-dark) !important;
+}
+
+#downloadsListBox .downloadProgress {
+  accent-color: var(--ag-teal-dark) !important;
+}
+
+#downloadsFooter,
+#downloadsFooter .subviewbutton,
+#downloadsHistory {
+  background: transparent !important;
+  color: var(--ag-text) !important;
+}
+
+/* ==========================================================================
+   Scrollbars
+   ========================================================================== */
+
+/* This only reaches Firefox's own UI (sidebar, Library, panels, the
+   autocomplete/urlbar results list) — userChrome.css cannot style the
+   scrollbar on an actual web page's content anymore. That boundary was
+   removed from Firefox some years ago for fingerprinting/security reasons;
+   there's no CSS trick that gets it back, that scrollbar now always follows
+   the OS/site rendering. Everything below is the closest available: a full
+   themed scrollbar (track, thumb, and up/down/left/right buttons) for the
+   chrome UI itself. */
+
+* {
+  scrollbar-color: var(--ag-teal-dark) var(--ag-ice) !important;
+  scrollbar-width: thin !important;
+}
+
+scrollbar,
+scrollbar[orient="vertical"],
+scrollbar[orient="horizontal"] {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: var(--ag-ice) !important;
+}
+
+scrollbar thumb {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: var(--ag-teal) !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--ag-teal-dark) !important;
+}
+
+scrollbar thumb:hover {
+  background-color: var(--ag-teal-dark) !important;
+}
+
+scrollbarbutton {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: var(--ag-ice) !important;
+  color: var(--ag-teal-dark) !important;
+  border: 1px solid var(--ag-teal-dark) !important;
+}
+
+scrollbarbutton:hover {
+  background-color: var(--ag-teal) !important;
+}
+
+/* ==========================================================================
+   Fullscreen & content chrome
+   ========================================================================== */
+
+#navigator-toolbox[inFullscreen="true"],
+#navigator-toolbox[inFullscreen="true"] > #nav-bar {
+  border-top: none !important;
+}
+
+#appcontent,
+.browserStack,
+#tabbrowser-tabpanels {
+  background: var(--ag-white) !important;
+}
+/* ==========================================================================
+   Context-menu icons (right-click menus, "Pin Tab", etc.)
+   ========================================================================== */
+
+/* Built-in context-menu items (Pin Tab, Reload, Bookmark This Tab, Cut/Copy/
+   Paste, Inspect, etc.) draw their icon via the native SVG using
+   -moz-context-properties, tinted with currentColor. The generic
+   menu/menuitem rule above already sets `color`, which these inherit — this
+   just makes the intent explicit and covers items that set their own icon
+   fill instead of using currentColor. No new art needed; this is the same
+   recolor approach used for #PanelUI-menu-button and the urlbar page-actions. */
+menuitem > .menu-iconic-icon,
+menu > .menu-iconic-icon,
+.menuitem-iconic-icon {
+  -moz-context-properties: fill, fill-opacity !important;
+  fill: var(--ag-text) !important;
+  fill-opacity: 1 !important;
+}
+
+/* ==========================================================================
+   Popups the generic menupopup/panel rule above doesn't reach
+   ========================================================================== */
+
+/* Form-fill / saved-logins autocomplete dropdown (a <panel>, but with its
+   own type="autocomplete-richlistbox" that some builds key off separately)
+   and the small transient "Saved to bookmarks!" / "Copied!" bubble. */
+panel[type="autocomplete-richlistbox"],
+panel[type="autocomplete"],
+#PopupAutoComplete,
+.autocomplete-richlistbox,
+panel#confirmation-hint,
+#confirmation-hint {
+  --panel-background: var(--ag-ice) url("./images/menu/menubg2.png") repeat-y left top !important;
+  --panel-color: var(--ag-text) !important;
+  --panel-border-color: var(--ag-teal-dark) !important;
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: var(--ag-ice) !important;
+  background-image: url("./images/menu/menubg2.png") !important;
+  background-repeat: repeat-y !important;
+  color: var(--ag-text) !important;
+  /* Same double-left-border fix as the main menupopup/panel rule above. */
+  border-top: 1px solid var(--ag-teal-dark) !important;
+  border-right: 1px solid var(--ag-teal-dark) !important;
+  border-bottom: 1px solid var(--ag-teal-dark) !important;
+  border-left: none !important;
+}
+
+.autocomplete-richlistitem:hover,
+.autocomplete-richlistitem[selected="true"] {
+  background-color: transparent !important;
+  background-image: url("./images/menu/menubg2-hover.png") !important;
+  background-repeat: repeat-y !important;
+}
+
+/* ==========================================================================
+   Library window (bookmarks/history manager) — a real separate window,
+   not a popup. Opened via "Show All Bookmarks", "Show All History", or
+   "Show all downloads" from the Downloads panel. Ignore-list further down
+   covers the windows this section deliberately does NOT touch.
+   ========================================================================== */
+
+#placesToolbox,
+#placesToolbar {
+  background: var(--ag-chrome-bg) !important;
+  border-bottom: 1px solid var(--ag-teal-dark) !important;
+  color: var(--ag-text) !important;
+}
+
+#placesToolbar toolbarbutton {
+  appearance: none !important;
+  background: transparent !important;
+  color: var(--ag-text) !important;
+}
+
+#placesList,
+#placeContent,
+.sidebar-placesTree {
+  background-color: var(--ag-white) !important;
+  color: var(--ag-text) !important;
+  scrollbar-color: var(--ag-teal-dark) var(--ag-ice) !important;
+}
+
+treechildren::-moz-tree-row {
+  background-color: transparent !important;
+}
+
+treechildren::-moz-tree-row(selected) {
+  background-color: var(--ag-teal) !important;
+}
+
+treechildren::-moz-tree-cell-text {
+  color: var(--ag-text) !important;
+}
+
+treechildren::-moz-tree-cell-text(selected) {
+  color: var(--ag-white) !important;
+}
+
+#placesView splitter {
+  border-color: var(--ag-teal-dark) !important;
+}
+
+/* ==========================================================================
+   Page Info dialog — also a separate top-level window.
+   ========================================================================== */
+
+#main-window[windowtype="Browser:page-info"] #titlebar,
+#main-window[windowtype="Browser:page-info"] #topBar,
+#pageInfoBox {
+  background: var(--ag-chrome-bg) !important;
+  color: var(--ag-text) !important;
+}
+
+#topBar radio[selected="true"] {
+  background: var(--ag-ice) url("./images/menu/menubg2.png") repeat-y left top !important;
+  border: 1px solid var(--ag-teal-dark) !important;
+}
+
+/* ==========================================================================
+   What can't be reskinned this way — left as-is on purpose
+   ========================================================================== */
+
+/*
+   - about:preferences, about:addons, about:downloads and any other
+     "about:" page opened in a normal tab: these render as ordinary web
+     content, not browser chrome, so userChrome.css cannot see them at all
+     (that's the same content/chrome split that blocks page scrollbars —
+     see the Scrollbars section above). Theming them needs userContent.css
+     targeting each about: URL individually, and Mozilla has been
+     progressively locking that path down release over release, so it's
+     liable to break on updates; not attempted here.
+   - The floating Picture-in-Picture video window: its controls are
+     privileged content injected over the video, not part of any chrome://
+     skin, and no theme (old or new) has ever been able to restyle it.
+   - Native OS dialogs (file open/save pickers, the print dialog, the
+     color/date pickers on some platforms): these are drawn by Windows/
+     macOS/GTK directly, never by Firefox's own CSS.
+   - The Customize Toolbar / Customize Firefox Home overlay and the
+     Add-ons Manager's own internal panels use their own shadow-DOM markup
+     that changes structure often enough between releases that hard-coding
+     selectors for it tends to break within a few versions; skipped for
+     that reason rather than because it's impossible.
+*/

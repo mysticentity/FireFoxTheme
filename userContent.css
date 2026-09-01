@@ -1,0 +1,8 @@
+/* Arctic Glow — userContent.css (optional new-tab / internal pages tint) */
+
+@-moz-document url("about:blank"), url("about:newtab") {
+  body {
+    background-color: #e2eff3 !important;
+    color: #2c4a56 !important;
+  }
+}
